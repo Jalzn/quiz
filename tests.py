@@ -1,6 +1,21 @@
 import pytest
 from model import Question
 
+@pytest.fixture
+def question_with_three_choices():
+    q = Question(title="Sample Question", max_selections=2)
+    q.add_choice("a", is_correct=True)
+    q.add_choice("b")
+    q.add_choice("c", is_correct=True)
+    return q
+
+@pytest.fixture
+def question_with_no_correct_choices():
+    q = Question(title="No Correct Choices", max_selections=1)
+    q.add_choice("a")
+    q.add_choice("b")
+    return q
+
 
 def test_create_question():
     question = Question(title='q1')
@@ -101,3 +116,19 @@ def test_add_choice_with_invalid_text():
         question.add_choice('')
     with pytest.raises(Exception):
         question.add_choice('a' * 101)
+
+def test_select_correct_choices_with_fixture(question_with_three_choices):
+    correct_ids = question_with_three_choices._correct_choice_ids()
+    selected = question_with_three_choices.select_choices(correct_ids)
+    assert selected == correct_ids
+
+def test_select_choices_exceeds_max_raises(question_with_three_choices):
+    ids = [choice.id for choice in question_with_three_choices.choices]
+    with pytest.raises(Exception):
+        question_with_three_choices.select_choices(ids)
+
+def test_no_correct_choices_returns_empty_list(question_with_no_correct_choices):
+    ids = [choice.id for choice in question_with_no_correct_choices.choices[:1]]
+    selected = question_with_no_correct_choices.select_choices(ids)
+    assert selected == []
+
